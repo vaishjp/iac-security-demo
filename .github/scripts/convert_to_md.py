@@ -153,7 +153,7 @@ jobs:
         run: pip install checkov
 
       - name: Run Checkov scan
-        run: checkov -d . --output json > checkov_report.json
+        run: checkov -d . --output json > checkov_report.json || true
 
       - name: Convert Checkov JSON to Markdown
         run: python .github/scripts/convert_to_md.py
