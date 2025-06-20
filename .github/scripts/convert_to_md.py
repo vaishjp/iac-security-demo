@@ -66,7 +66,7 @@ else:
     print("✅ No high/critical issues found.")
     sys.exit(0)
 '''
-
+"""
 import json
 import sys
 
@@ -124,3 +124,42 @@ print("✅ Markdown report generated: checkov_report.md")
 
 # Exit appropriately
 sys.exit(exit_code)
+"""
+
+
+name: IaC Security Check
+
+on:
+  push:
+    branches:
+      - test-checkov
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checkov_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov scan
+        run: checkov -d . --output json > checkov_report.json
+
+      - name: Convert Checkov JSON to Markdown
+        run: python .github/scripts/convert_to_md.py
+
+      - name: Upload Markdown Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov_markdown_report
+          path: checkov_report.md

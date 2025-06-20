@@ -1,0 +1,122 @@
+[
+  {
+    "id": "IAC001",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket allows public read access via ACL",
+    "severity": "High"
+  },
+  {
+    "id": "IAC002",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket does not have server-side encryption enabled",
+    "severity": "High"
+  },
+  {
+    "id": "IAC003",
+    "resource": "aws_security_group",
+    "description": "Security group allows 0.0.0.0/0 on port 22 (SSH)",
+    "severity": "Critical"
+  },
+  {
+    "id": "IAC004",
+    "resource": "aws_security_group",
+    "description": "Security group allows unrestricted access on port 3389 (RDP)",
+    "severity": "Critical"
+  },
+  {
+    "id": "IAC005",
+    "resource": "aws_db_instance",
+    "description": "Database instance is not encrypted at rest",
+    "severity": "High"
+  },
+  {
+    "id": "IAC006",
+    "resource": "aws_iam_policy",
+    "description": "IAM policy allows wildcard '*' in actions or resources",
+    "severity": "Critical"
+  },
+  {
+    "id": "IAC007",
+    "resource": "aws_ebs_volume",
+    "description": "EBS volume does not have encryption enabled",
+    "severity": "High"
+  },
+  {
+    "id": "IAC008",
+    "resource": "aws_cloudtrail",
+    "description": "CloudTrail is not configured to log all regions",
+    "severity": "Medium"
+  },
+  {
+    "id": "IAC009",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket does not have access logging enabled",
+    "severity": "Medium"
+  },
+  {
+    "id": "IAC010",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket does not block public ACLs or policies",
+    "severity": "High"
+  },
+  {
+    "id": "IAC011",
+    "resource": "aws_lambda_function",
+    "description": "Lambda function environment variables are not encrypted",
+    "severity": "Medium"
+  },
+  {
+    "id": "IAC012",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket lacks versioning",
+    "severity": "Low"
+  },
+  {
+    "id": "IAC013",
+    "resource": "aws_s3_bucket",
+    "description": "S3 bucket lacks lifecycle configuration",
+    "severity": "Low"
+  },
+  {
+    "id": "IAC014",
+    "resource": "kubernetes_pod",
+    "description": "Kubernetes Pod does not set runAsNonRoot",
+    "severity": "Medium"
+  },
+  {
+    "id": "IAC015",
+    "resource": "kubernetes_deployment",
+    "description": "Kubernetes Deployment has containers using latest image tag",
+    "severity": "Low"
+  },
+  {
+    "id": "IAC016",
+    "resource": "kubernetes_service",
+    "description": "Kubernetes Service exposes port without selector restriction",
+    "severity": "High"
+  },
+  {
+    "id": "IAC017",
+    "resource": "kubernetes_config_map",
+    "description": "Sensitive data stored in ConfigMap instead of Secret",
+    "severity": "Critical"
+  },
+  {
+    "id": "IAC018",
+    "resource": "aws_rds_cluster",
+    "description": "RDS cluster backup retention period is not set or too low",
+    "severity": "Medium"
+  },
+  {
+    "id": "IAC019",
+    "resource": "aws_api_gateway",
+    "description": "API Gateway is not protected with authorization mechanism",
+    "severity": "High"
+  },
+  {
+    "id": "IAC020",
+    "resource": "aws_ec2_instance",
+    "description": "EC2 instance does not have instance-level IAM roles",
+    "severity": "Medium"
+  }
+]
