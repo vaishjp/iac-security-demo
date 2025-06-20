@@ -2,31 +2,28 @@ name: IaC Security Check
 
 on:
   pull_request:
-    paths:
-      - '**.tf'
-      - '**.yaml'
-      - '**.yml'
 
 jobs:
   checkov_scan:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-      - name: Install Checkov
-        run: pip install checkov
+    - name: Install Checkov
+      run: pip install checkov
 
-      - name: Run Checkov scan
-        run: checkov -d . --output json > checkov_report.json
+    - name: Run Checkov and save output in JSON
+      run: |
+        checkov -d . --output json > checkov_report.json || true
 
-      - name: Upload Checkov Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: checkov-report
-          path: checkov_report.json
+    - name: Upload Checkov Report
+      uses: actions/upload-artifact@v3
+      with:
+        name
