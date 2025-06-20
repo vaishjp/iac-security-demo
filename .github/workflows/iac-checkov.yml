@@ -1,29 +1,39 @@
 name: IaC Security Check
 
 on:
+  push:
+    branches: [ test-checkov ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   checkov_scan:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Install Checkov
-      run: pip install checkov
+      - name: Install Checkov
+        run: pip install checkov
 
-    - name: Run Checkov and save output in JSON
-      run: |
-        checkov -d . --output json > checkov_report.json || true
+      - name: Run Checkov scan
+        run: checkov -d . --output json > checkov_report.json
 
-    - name: Upload Checkov Report
-      uses: actions/upload-artifact@v3
-      with:
-        name
+      - name: Convert Checkov JSON to Markdown
+        run: |
+          python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md
+
+      - name: Upload Checkov Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkov-report
+          path: checkov_report.md
+
+      - name: Show Markdown Report (Debug)
+        run: cat checkov_report.md
