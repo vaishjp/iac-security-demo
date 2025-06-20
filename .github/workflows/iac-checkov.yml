@@ -9,7 +9,8 @@ on:
       - main
 
 jobs:
-  checkov-scan:
+  checkov_scan:
+    name: Run Checkov and Generate Report
     runs-on: ubuntu-latest
 
     steps:
@@ -19,22 +20,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: '3.11'
 
-      - name: Install Checkov
-        run: pip install checkov
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install checkov
 
-      - name: Run Checkov scan and generate JSON
+      - name: Run Checkov scan and output JSON
         run: checkov -d . --output json > checkov_report.json || true
 
-      - name: Convert Checkov JSON to Markdown
+      - name: Convert JSON to Markdown Report
         run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
 
-      - name: Debug – Show files
-        run: ls -la
-
-      - name: Upload Markdown report as artifact
+      - name: Upload Checkov Reports
         uses: actions/upload-artifact@v4
         with:
-          name: checkov-markdown-report
-          path: checkov_report.md
+          name: checkov-reports
+          path: |
+            checkov_report.json
+            checkov_report.md
