@@ -46,19 +46,18 @@ jobs:
       - name: Block PR on Critical Issues
         run: python .github/scripts/block_on_critical.py checkov_report.json
 
-     - name: Post Checkov Report to PR
-  if: github.event_name == 'pull_request'
-  run: python .github/scripts/post_comment.py checkov_report.md
-  env:
-    GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-    GITHUB_REPOSITORY: ${{ github.repository }}
-    PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Post Checkov Report to PR
+        if: github.event_name == 'pull_request'
+        run: python .github/scripts/post_comment.py checkov_report.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 
-- name: Post Severity Chart to PR
-  if: github.event_name == 'pull_request'
-  run: python .github/scripts/post_comment.py severity_summary_chart.md
-  env:
-    GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-    GITHUB_REPOSITORY: ${{ github.repository }}
-    PR_NUMBER: ${{ github.event.pull_request.number }}
-
+      - name: Post Severity Chart to PR
+        if: github.event_name == 'pull_request'
+        run: python .github/scripts/post_comment.py severity_summary_chart.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
