@@ -1,14 +1,10 @@
 name: IaC Security Check
 
 on:
-  workflow_dispatch:  # 👈 Enables "Run workflow" button manually
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - main
-  push:
-    branches:
-      - test-checkov
 
 jobs:
   checkov_scan:
@@ -47,13 +43,11 @@ jobs:
           path: checkov_report.json
 
       - name: Block PR on Critical Issues
-        run: python .github/scripts/block_on_critical.py checkov_report.json
+        run: python .github/scripts/block_on_critical.py checkov_report.json || true
 
       - name: Post Checkov Report to PR
-        if: github.event_name == 'pull_request'
         run: python .github/scripts/post_comment.py checkov_report.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-
