@@ -54,10 +54,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
-      - name: Post Severity Chart to PR
-        if: github.event_name == 'pull_request'
-        run: python .github/scripts/post_comment.py severity_summary_chart.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+   
