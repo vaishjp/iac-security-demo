@@ -49,3 +49,12 @@ jobs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: python .github/scripts/post_pr_comment.py
+
+
+      - name: Set PR Number
+        run: echo "PR_NUMBER=$(echo '${{ github.event.pull_request.number }}')" >> $GITHUB_ENV
+
+      - name: Post Checkov Report as PR Comment
+        run: python .github/scripts/post_pr_comment.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

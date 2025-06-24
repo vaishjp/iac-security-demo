@@ -1,34 +1,43 @@
 import os
 import requests
+import sys
 
-# Get inputs from environment
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
-GITHUB_PR_NUMBER = os.getenv("PR_NUMBER")
+def post_comment(pr_number, comment_body):
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPOSITORY")
 
-if not GITHUB_PR_NUMBER:
-    print("❌ Error: PR_NUMBER not set.")
-    exit(1)
+    if not token or not repo:
+        print("Missing GITHUB_TOKEN or GITHUB_REPOSITORY environment variables")
+        sys.exit(1)
 
-# Read the markdown report
-with open("checkov_report.md", "r", encoding="utf-8") as file:
-    comment_body = file.read()
+    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
 
-# Prepare the API call
-url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/issues/{GITHUB_PR_NUMBER}/comments"
-headers = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
-}
-data = {
-    "body": comment_body
-}
+    data = {"body": comment_body}
 
-# Make the API call
-response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data)
 
-if response.status_code == 201:
-    print("✅ Comment posted successfully.")
-else:
-    print(f"❌ Failed to post comment: {response.status_code}\n{response.text}")
-    exit(1)
+    if response.status_code == 201:
+        print("✅ PR comment posted successfully.")
+    else:
+        print(f"❌ Failed to post comment. Status: {response.status_code}")
+        print(response.text)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    pr_number = os.getenv("PR_NUMBER")
+    if not pr_number:
+        print("❌ PR_NUMBER environment variable not found.")
+        sys.exit(1)
+
+    try:
+        with open("checkov_report.md", "r", encoding="utf-8") as f:
+            comment_body = f.read()
+    except FileNotFoundError:
+        print("❌ Markdown report file not found.")
+        sys.exit(1)
+
+    post_comment(pr_number, comment_body)
