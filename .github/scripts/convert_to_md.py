@@ -24,6 +24,8 @@ if __name__ == "__main__":
     try:
         with open(sys.argv[1], 'r') as f:
             data = json.load(f)
+        if not isinstance(data, list):
+            raise ValueError("Expected a list of checks in JSON output")
         md_text = generate_markdown(data)
         with open(sys.argv[2], 'w') as f:
             f.write(md_text)
