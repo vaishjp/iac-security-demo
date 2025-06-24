@@ -3,9 +3,6 @@ name: IaC Security Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches:
-      - test-checkov
 
 jobs:
   checkov_scan:
@@ -20,19 +17,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies
+      - name: Install Checkov and dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install checkov matplotlib
+          pip install checkov tabulate
 
       - name: Run Checkov scan and output JSON
         run: checkov -d . -o json > checkov_report.json || true
 
-      - name: Convert JSON to Markdown
+      - name: Convert JSON to Markdown report
         run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
 
-      - name: Generate Severity Chart
-        run: python .github/scripts/severity_chart.py
+      - name: Generate Severity Summary Chart
+        run: python .github/scripts/severity_summary_chart.py checkov_report.json severity_summary_chart.md || true
 
       - name: Upload Markdown report
         uses: actions/upload-artifact@v4
@@ -40,17 +37,17 @@ jobs:
           name: checkov-markdown-report
           path: checkov_report.md
 
+      - name: Upload Severity Summary Chart
+        uses: actions/upload-artifact@v4
+        with:
+          name: severity-summary-chart
+          path: severity_summary_chart.md
+
       - name: Upload JSON report
         uses: actions/upload-artifact@v4
         with:
           name: checkov-json-report
           path: checkov_report.json
-
-      - name: Upload Severity Chart
-        uses: actions/upload-artifact@v4
-        with:
-          name: severity-chart
-          path: severity_chart.png
 
       - name: Block PR on Critical Issues
         run: python .github/scripts/block_on_critical.py checkov_report.json
