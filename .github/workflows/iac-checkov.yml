@@ -42,3 +42,10 @@ jobs:
         with:
           name: checkov-markdown-report
           path: checkov_report.md
+
+    - name: Post Checkov report as PR comment
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: python .github/scripts/post_pr_comment.py
