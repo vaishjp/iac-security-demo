@@ -1,19 +1,26 @@
 import json
 import sys
 
-with open(sys.argv[1], "r") as f:
+# Load the JSON report
+with open(sys.argv[1], 'r') as f:
     data = json.load(f)
 
-failed_checks = data.get("results", {}).get("failed_checks", [])
-fail = False
+# Checkov returns a list of result dicts
+failed_checks = []
 
+for check in data:
+    if check.get("check_result", {}).get("result") == "FAILED":
+        failed_checks.append(check)
+
+# Check if any are critical or high severity
+block = False
 for check in failed_checks:
     severity = check.get("severity", "").lower()
-    if severity in ["high", "critical"]:
-        print(f"❌ Found high/critical issue: {check.get('check_id')} - Severity: {severity}")
-        fail = True
+    if severity in ["critical", "high"]:
+        block = True
+        print(f"❌ Blocking PR due to {severity.upper()} issue in {check.get('file_path')}")
 
-if fail:
-    sys.exit(1)  # fail the workflow
+if block:
+    sys.exit(1)  # Fail the pipeline
 else:
-    print("✅ No high/critical issues found.")
+    print("✅ No high or critical issues found.")
