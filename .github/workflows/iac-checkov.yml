@@ -26,7 +26,8 @@ jobs:
 
       - name: Run Checkov scan
         run: |
-          checkov -d . -o json > checkov_report.json
+          checkov -d . -o json > checkov_report.json || true
+
 
       - name: Fail if critical/high issues exist
         run: |
