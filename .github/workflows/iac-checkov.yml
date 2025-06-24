@@ -6,6 +6,11 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+  contents: read
+
+
 jobs:
   checkov_scan:
     runs-on: ubuntu-latest
