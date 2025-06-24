@@ -1,13 +1,15 @@
 name: IaC Security Check
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - test-checkov
-  pull_request:
 
 jobs:
-  checkov-scan:
+  checkov_scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,42 +21,34 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Checkov
         run: |
           python -m pip install --upgrade pip
           pip install checkov
 
-      - name: Run Checkov scan
-        run: |
-          checkov -d . -o json > checkov_report.json || true
+      - name: Run Checkov scan and output JSON
+        run: checkov -d . -o json > checkov_report.json || true
 
+      - name: Convert JSON to Markdown
+        run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
 
-      - name: Fail if critical/high issues exist
-        run: |
-          python .github/scripts/block_on_critical.py checkov_report.json
-
-      - name: Convert report to Markdown
-        run: |
-          python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
-
-      - name: Upload markdown report
+      - name: Upload Markdown report
         uses: actions/upload-artifact@v4
         with:
           name: checkov-markdown-report
           path: checkov_report.md
 
-    - name: Post Checkov report as PR comment
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-      run: python .github/scripts/post_pr_comment.py
+      - name: Upload JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-json-report
+          path: checkov_report.json
 
+      - name: Block PR on Critical Issues
+        run: python .github/scripts/block_on_critical.py checkov_report.json
 
-      - name: Set PR Number
-        run: echo "PR_NUMBER=$(echo '${{ github.event.pull_request.number }}')" >> $GITHUB_ENV
-
-      - name: Post Checkov Report as PR Comment
-        run: python .github/scripts/post_pr_comment.py
+      - name: Post Checkov Report to PR
+        if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .github/scripts/post_comment.py checkov_report.md
