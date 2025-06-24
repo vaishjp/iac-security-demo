@@ -29,21 +29,7 @@ jobs:
         run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
 
       - name: Generate Severity Summary Chart
-        run: python .github/scripts/severity_summary_chart.py checkov_report.json severity_summary_chart.md ||true
-
-      - name: Upload Chart Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: severity-summary-chart
-          path: severity_summary_chart.md
-
-      - name: Post Severity Chart as PR Comment
-        run: python .github/scripts/post_comment.py severity_summary_chart.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-
+        run: python .github/scripts/severity_summary_chart.py checkov_report.json severity_summary_chart.md || true
 
       - name: Upload Markdown report
         uses: actions/upload-artifact@v4
