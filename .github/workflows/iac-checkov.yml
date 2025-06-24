@@ -5,12 +5,9 @@ on:
     branches:
       - test-checkov
   pull_request:
-    branches:
-      - main
 
 jobs:
-  checkov_scan:
-    name: Run Checkov and Generate Report
+  checkov-scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,16 +24,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install checkov
 
-      - name: Run Checkov scan and output JSON
-        run: checkov -d . --output json > checkov_report.json || true
+      - name: Run Checkov scan
+        run: |
+          checkov -d . -o json > checkov_report.json
 
-      - name: Convert JSON to Markdown Report
-        run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
+      - name: Fail if critical/high issues exist
+        run: |
+          python .github/scripts/block_on_critical.py checkov_report.json
 
-      - name: Upload Checkov Reports
+      - name: Convert report to Markdown
+        run: |
+          python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
+
+      - name: Upload markdown report
         uses: actions/upload-artifact@v4
         with:
-          name: checkov-reports
-          path: |
-            checkov_report.json
-            checkov_report.md
+          name: checkov-markdown-report
+          path: checkov_report.md
