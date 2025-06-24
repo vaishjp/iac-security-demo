@@ -1,6 +1,7 @@
 name: IaC Security Check
 
 on:
+  workflow_dispatch:  # 👈 This enables the "Run workflow" button
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -8,6 +9,7 @@ on:
   push:
     branches:
       - test-checkov
+
 
 jobs:
   checkov_scan:
