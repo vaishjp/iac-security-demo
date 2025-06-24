@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install checkov matplotlib
 
       - name: Run Checkov scan and output JSON
@@ -50,7 +50,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: python .github/scripts/post_comment.py checkov_report.md
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
@@ -58,6 +58,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: python .github/scripts/post_comment.py severity_summary_chart.md
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
