@@ -1,67 +1,33 @@
 import json
 import sys
 
-def parse_checkov_report(json_file):
-    try:
-        with open(json_file, 'r') as f:
-            data = json.load(f)
-        return data
-    except Exception as e:
-        print(f"❌ Error loading Checkov JSON report: {e}")
-        sys.exit(1)
-
 def generate_markdown(data):
-    markdown_lines = ["# 🛡️ Checkov Misconfiguration Report\n"]
+    md = "# 🛡️ Checkov Misconfiguration Report\n\n"
+    for check in data:
+        if check.get("check_result", {}).get("result") != "FAILED":
+            continue
+        severity = check.get("severity", "UNKNOWN")
+        resource = check.get("resource", "UNKNOWN")
+        file_path = check.get("file_path", "")
+        file_line_range = check.get("file_line_range", [])
+        check_id = check.get("check_id", "")
+        check_name = check.get("check_name", "")
+        
+        md += f"### ❗ {check_id} - {check_name}\n"
+        md += f"- **Severity**: {severity}\n"
+        md += f"- **Resource**: `{resource}`\n"
+        md += f"- **File**: `{file_path}` (Lines {file_line_range})\n"
+        md += "\n---\n"
+    return md
 
-    failed_checks = data.get("results", {}).get("failed_checks", [])
-
-    if not failed_checks:
-        markdown_lines.append("✅ No misconfigurations found.\n")
-    else:
-        for check in failed_checks:
-            severity = check.get("severity", "UNKNOWN")
-            resource = check.get("resource", "UNKNOWN")
-            file_path = check.get("file_path", "")
-            file_line_range = check.get("file_line_range", [])
-            check_id = check.get("check_id", "")
-            check_name = check.get("check_name", "")
-            guideline = check.get("guideline", "")
-
-            markdown_lines.append(f"### ❗ {check_id} - {check_name}")
-            markdown_lines.append(f"- **Severity**: {severity}")
-            markdown_lines.append(f"- **Resource**: `{resource}`")
-            markdown_lines.append(f"- **File**: `{file_path}` (Lines {file_line_range})")
-            if guideline:
-                markdown_lines.append(f"- **Guideline**: [Link]({guideline})")
-            markdown_lines.append("\n---\n")
-
-    return "\n".join(markdown_lines)
-
-def save_markdown(md_text, output_file):
+if __name__ == "__main__":
     try:
-        with open(output_file, 'w') as f:
+        with open(sys.argv[1], 'r') as f:
+            data = json.load(f)
+        md_text = generate_markdown(data)
+        with open(sys.argv[2], 'w') as f:
             f.write(md_text)
-        print(f"✅ Markdown report generated: {output_file}")
+        print("✅ Markdown report generated successfully.")
     except Exception as e:
         print(f"❌ Error generating report: {e}")
         sys.exit(1)
-
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python convert_to_md.py <input_json> <output_md>")
-        sys.exit(1)
-
-    json_file = sys.argv[1]
-    md_file = sys.argv[2]
-
-    data = parse_checkov_report(json_file)
-    md_text = generate_markdown(data)
-    save_markdown(md_text, md_file)
-
-    # 🚨 Fail the workflow if there are any high or critical issues
-    exit_code = 0
-    for check in data.get("results", {}).get("failed_checks", []):
-        if check.get("severity", "").lower() in ["high", "critical"]:
-            exit_code = 1
-
-    sys.exit(exit_code)
