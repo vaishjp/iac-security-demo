@@ -1,66 +1,59 @@
 import json
-import sys
 import os
-import shutil
-import re
 
+# ✅ Autofix rules for common Checkov issues
 FIX_RULES = {
-    # Example rule: Fix public EC2 instances
-    "CKV_AWS_88": {
-        "pattern": r'(resource\s+"aws_instance"\s+".*?"\s*\{[\s\S]*?)associate_public_ip_address\s+=\s+true',
-        "fix": r'\1associate_public_ip_address = false',
-        "note": "Removed public IP assignment from EC2"
-    },
-    # Add more rules below...
-    "CKV_AWS_20": {
-        "pattern": r'acl\s+=\s+"public-read"',
-        "fix": r'acl = "private"',
-        "note": "Set S3 bucket ACL to private"
-    }
+    # Publicly exposed resources (e.g., 0.0.0.0/0) – restrict CIDR
+    "CKV_AWS_23": lambda content: content.replace("0.0.0.0/0", "10.0.0.0/16"),
+
+    # S3 bucket without encryption – enable AES256 encryption
+    "CKV_AWS_21": lambda content: content.replace(
+        'resource "aws_s3_bucket" "',
+        'resource "aws_s3_bucket" "\n  server_side_encryption_configuration {\n    rule {\n      apply_server_side_encryption_by_default {\n        sse_algorithm = "AES256"\n      }\n    }\n  }'
+    ),
+
+    # Security group rule allows all traffic
+    "CKV_AWS_20": lambda content: content.replace("cidr_blocks = [\"0.0.0.0/0\"]", "cidr_blocks = [\"10.0.0.0/16\"]"),
 }
 
-def load_failed_checks(json_file):
-    with open(json_file, 'r') as f:
-        data = json.load(f)
-    # Ensure we’re dealing with a list
-    if isinstance(data, list):
-        return data
-    return data.get("results", {}).get("failed_checks", [])
+def autofix(report_file):
+    try:
+        with open(report_file, "r") as f:
+            report = json.load(f)
+    except Exception as e:
+        print(f"❌ Failed to load JSON report: {e}")
+        return
 
-def apply_fix_to_file(file_path, check_id):
-    rule = FIX_RULES.get(check_id)
-    if not rule or not os.path.exists(file_path):
-        return None
+    if not isinstance(report, list):
+        print("❌ Invalid format in report file – expected a list.")
+        return
 
-    with open(file_path, "r") as f:
-        content = f.read()
+    for issue in report:
+        check_id = issue.get("check_id")
+        file_path = issue.get("file_path", "").lstrip("/")
+        resource = issue.get("resource")
 
-    new_content = re.sub(rule["pattern"], rule["fix"], content, flags=re.MULTILINE)
+        if not (check_id and file_path and os.path.isfile(file_path)):
+            continue
 
-    fixed_file_path = file_path.replace(".tf", "_fixed.tf")
-    with open(fixed_file_path, "w") as f:
-        f.write(new_content)
+        print(f"🔍 Processing {check_id} in {file_path}...")
 
-    return fixed_file_path
+        try:
+            with open(file_path, "r") as tf:
+                original = tf.read()
 
-def main(report_path):
-    fixes_made = []
+            if check_id in FIX_RULES:
+                fixed = FIX_RULES[check_id](original)
 
-    checks = load_failed_checks(report_path)
-    for check in checks:
-        check_id = check["check_id"]
-        file_path = check["file_path"].lstrip("./")
-        fixed_file = apply_fix_to_file(file_path, check_id)
-        if fixed_file:
-            fixes_made.append(f"✅ {check_id} fixed in {fixed_file}")
+                fixed_path = file_path.replace(".tf", "_fixed.tf")
+                with open(fixed_path, "w") as f:
+                    f.write(fixed)
 
-    if not fixes_made:
-        print("❌ No auto-fixes applied (no matching rules or no changes needed)")
-    else:
-        print("\n".join(fixes_made))
+                print(f"✅ Fixed file saved: {fixed_path}")
+            else:
+                print(f"⚠️ No fix rule for {check_id}, skipping.")
+        except Exception as e:
+            print(f"❌ Error fixing {file_path}: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python autofix_from_checkov.py checkov_report.json")
-        sys.exit(1)
-    main(sys.argv[1])
+    autofix("checkov_report.json")
