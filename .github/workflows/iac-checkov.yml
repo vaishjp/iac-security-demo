@@ -46,6 +46,11 @@ jobs:
       - name: Block PR on Critical Issues
         run: python .github/scripts/block_on_critical.py checkov_report.json
 
-      
+      - name: Upload Fixed Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixed-iac-files
+          path: '**/*_fixed.tf'
+
 
    
