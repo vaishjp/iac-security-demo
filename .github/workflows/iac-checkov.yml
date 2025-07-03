@@ -34,10 +34,10 @@ jobs:
       - name: Generate severity summary chart
         run: python .github/scripts/severity_summary_chart.py checkov_report.json severity_summary_chart.md || true
 
-      - name: Upload Artifacts
+      - name: Upload Reports (JSON + Markdown + Chart)
         uses: actions/upload-artifact@v4
         with:
-          name: reports
+          name: checkov-reports
           path: |
             checkov_report.json
             checkov_report.md
@@ -46,11 +46,13 @@ jobs:
       - name: Block PR on Critical Issues
         run: python .github/scripts/block_on_critical.py checkov_report.json
 
-      - name: Upload Fixed Files
+      - name: Upload Fixed IaC Files
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fixed-iac-files
-          path: '**/*_fixed.tf'
+          path: |
+            **/*_fixed.tf
 
       - name: Post Fix Suggestions to PR
         if: github.event_name == 'pull_request'
@@ -59,6 +61,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-
-
-   
