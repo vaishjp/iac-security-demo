@@ -52,5 +52,13 @@ jobs:
           name: fixed-iac-files
           path: '**/*_fixed.tf'
 
+      - name: Post Fix Suggestions to PR
+        if: github.event_name == 'pull_request'
+        run: python .github/scripts/post_fixes.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
 
    
