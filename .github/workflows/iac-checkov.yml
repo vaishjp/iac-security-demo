@@ -2,14 +2,15 @@ name: IaC Security Check
 
 on:
   pull_request:
-    paths:
-      - '**.tf'
-      - '**.yaml'
-      - '**.yml'
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - test-checkov
 
 jobs:
   checkov_scan:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,14 +20,44 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Checkov
-        run: pip install checkov
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install checkov matplotlib
 
-      - name: Run Checkov scan
-        run: checkov -d . --output json > checkov_report.json
+      - name: Run Checkov scan and output JSON
+        run: checkov -d . -o json > checkov_report.json || true
 
-      - name: Upload Checkov Report
+      - name: Convert JSON to Markdown
+        run: python .github/scripts/convert_to_md.py checkov_report.json checkov_report.md || true
+
+      - name: Generate severity summary chart
+        run: python .github/scripts/severity_summary_chart.py checkov_report.json severity_summary_chart.md || true
+
+      - name: Upload Reports (JSON + Markdown + Chart)
         uses: actions/upload-artifact@v4
         with:
-          name: checkov-report
-          path: checkov_report.json
+          name: checkov-reports
+          path: |
+            checkov_report.json
+            checkov_report.md
+            severity_summary_chart.md
+
+      - name: Block PR on Critical Issues
+        run: python .github/scripts/block_on_critical.py checkov_report.json
+
+      - name: Upload Fixed IaC Files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixed-iac-files
+          path: |
+            **/*_fixed.tf
+
+      - name: Post Fix Suggestions to PR
+        if: github.event_name == 'pull_request'
+        run: python .github/scripts/post_fixes.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
